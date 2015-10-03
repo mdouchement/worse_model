@@ -9,14 +9,16 @@ Gem::Specification.new do |spec|
   spec.authors       = ['mdouchement']
   spec.email         = ['marc.douchement@predicsis.com']
 
-  spec.summary       = %q{In memory DB using ActiveModel.}
-  spec.description   = %q{In memory DB using ActiveModel.}
+  spec.summary       = 'In memory DB using ActiveModel.'
+  spec.description   = 'In memory DB using ActiveModel.'
   spec.homepage      = ''
   spec.license       = 'MIT'
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.files         = `git ls-files -z`.split("\x0").reject do |f|
+    f.match(/^(test|spec|features)\//)
+  end
   spec.bindir        = 'bin'
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.executables   = spec.files.grep(/^exe\//) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
   spec.add_dependency 'activemodel', '>= 4.0.0'

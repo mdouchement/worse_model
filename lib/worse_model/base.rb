@@ -1,6 +1,7 @@
 module WorseModel
   module Base
     def self.included(base)
+      extend Forwardable
       base.class_eval do
         extend ActiveModel::Naming
         include ActiveModel::Conversion
@@ -17,7 +18,8 @@ module WorseModel
     end
 
     attr_accessor :attributes
-    attr_writer   :new_record
+    attr_writer :new_record
+    delegate :hash, to: :id
 
     def known_attributes
       self.class.known_attributes | self.attributes.keys.map(&:to_s)
@@ -27,7 +29,7 @@ module WorseModel
       @new_record = true
       @attributes = {}.with_indifferent_access
       known_attributes.each { |attribut| __generate_attribute_accessor__(attribut) }
-      @attributes.merge!(known_attributes.inject({}) { |h, n| h[n] = nil; h })
+      @attributes.merge!(known_attributes.each_with_object({}) { |n, h| h[n] = nil })
       @changed_attributes = {}
       load(params)
     end
@@ -58,10 +60,6 @@ module WorseModel
       self == other
     end
 
-    def hash
-      id.hash
-    end
-
     def dup
       self.class.new.tap do |base|
         base.load(attributes)
@@ -74,7 +72,7 @@ module WorseModel
     end
 
     def save!
-      save || raise(InvalidRecord)
+      save || fail(InvalidRecord)
     end
 
     def exists?
@@ -86,8 +84,10 @@ module WorseModel
       return unless params
       params.each do |name, value|
         name = name.to_sym
-        fail(UnknownAttribute,
-          "Attempted to set a value for '#{name}' which is not allowed on the model #{self.class.name}") unless known_attributes.include?(name)
+        unless known_attributes.include?(name)
+          fail UnknownAttribute.new("Attempted to set a value for '#{name}' " \
+                                    "which is not allowed on the model #{self.class.name}")
+        end
         attributes[name] = value
       end
     end
@@ -96,7 +96,7 @@ module WorseModel
       return self if new?
       item = self.class.find(id)
       load(item.attributes)
-      return self
+      self
     end
 
     def update_attribute(name, value)
@@ -111,8 +111,8 @@ module WorseModel
       update_attributes(params) || fail(InvalidRecord)
     end
 
-    def has_attribute?(name)
-      attributes.has_key?(name)
+    def attribute?(name)
+      attributes.key?(name)
     end
 
     alias_method :respond_to_without_attributes?, :respond_to?
@@ -194,14 +194,14 @@ module WorseModel
         @records ||= {}
       end
 
-      def find_by(params)
+      def find_by(_params)
         # keys = params.keys
         # records.select { |r| *(r[key] == params[key]) }
         fail 'Not implemented yet'
       end
 
       def raw_find(id) #:nodoc:
-        records[id] || fail(UnknownRecord, "Couldn't find #{self.name} with ID=#{id}")
+        records[id] || fail(UnknownRecord.new("Couldn't find #{self.name} with ID=#{id}"))
       end
 
       # Find record by ID, or raise.
@@ -221,12 +221,12 @@ module WorseModel
         item && item.dup
       end
 
-      def where(params)
+      def where(_params)
         fail 'Not implemented yet'
       end
 
       def exists?(id)
-        records.has_key?(id)
+        records.key?(id)
       end
 
       def count
@@ -248,7 +248,7 @@ module WorseModel
       # Removes all records and executes
       # destroy callbacks.
       def destroy_all
-        all.each { |r| r.destroy }
+        all.each(&:destroy)
       end
 
       # Removes all records without executing
@@ -266,7 +266,7 @@ module WorseModel
       end
 
       def create!(params)
-        create(params) || raise(InvalidRecord)
+        create(params) || fail(InvalidRecord)
       end
     end
   end
