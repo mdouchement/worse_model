@@ -1,5 +1,7 @@
 # Worsemodel
 
+[![Circle CI](https://circleci.com/gh/mdouchement/worse_model.svg?style=shield)](https://circleci.com/gh/mdouchement/worse_model)
+
 Simple in-memory database using ActiveModel.
 
 ## Supports
