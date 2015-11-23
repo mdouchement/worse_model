@@ -2,6 +2,9 @@
 
 [![Circle CI](https://circleci.com/gh/mdouchement/worse_model.svg?style=shield)](https://circleci.com/gh/mdouchement/worse_model)
 
+
+***== Discontinued development ==***
+
 Simple in-memory database using ActiveModel.
 
 ## Supports
